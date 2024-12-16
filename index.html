@@ -1,108 +1,227 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image to Base64 Converter</title>
+  <title>Universal Base64 Converter</title>
   <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --text-primary: #e5e5e5;
+      --text-secondary: #0f3460;
+      --accent-color: #6a0572;
+      --accent-hover: #9b4f0f;
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      font-family: 'Arial', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
       margin: 0;
       padding: 0;
+      line-height: 1.6;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 50px auto;
-      background-color: white;
+      background-color: var(--bg-secondary);
       padding: 40px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
     }
 
     h1 {
       text-align: center;
+      color: var(--text-primary);
       margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     form {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 20px;
       margin-bottom: 30px;
     }
 
     form input, form select {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
+      padding: 12px;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--text-secondary);
+      border-radius: 8px;
       font-size: 16px;
+      outline: none;
+    }
+
+    form input:focus, form select:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 10px rgba(106, 5, 114, 0.3);
     }
 
     button {
-      background-color: #4CAF50;
+      background-color: var(--accent-color);
       color: white;
-      padding: 10px 20px;
+      padding: 12px 20px;
       border: none;
-      border-radius: 3px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background-color: #45a049;
+      background-color: var(--accent-hover);
     }
 
     #base64-output {
-      background-color: #f4f4f4;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
       padding: 20px;
-      border-radius: 3px;
+      border-radius: 8px;
       word-break: break-all;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 2px dashed var(--text-secondary);
+      font-family: 'Courier New', monospace;
     }
 
     #copy-btn {
       float: right;
       margin-bottom: 10px;
     }
+
+    hr {
+      border: none;
+      height: 2px;
+      background-color: var(--text-secondary);
+      margin: 30px 0;
+    }
+
+    #preview-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow: auto;
+    }
+
+    #preview {
+      max-width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+    }
+
+    /* Preloader Styles */
+    #preloader {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+    }
+
+    .loader {
+      width: 100px;
+      height: 100px;
+      border: 10px solid #f3f3f3;
+      border-top: 10px solid var(--accent-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      color: var(--text-primary);
+      margin-left: 20px;
+      font-size: 1.2em;
+    }
   </style>
 </head>
 <body>
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="loader"></div>
+    <div class="loader-text">Processing...</div>
+  </div>
+
   <div class="container">
-    <h1>Image to Base64 Converter</h1>
+    <h1>Universal Base64 Converter</h1>
     <form>
-      <input type="text" id="url-input" placeholder="Enter image URL or upload a file">
+      <input type="text" id="url-input" placeholder="Enter URL or choose a file to convert">
       <input type="file" id="file-input" name="file">
       <select id="output-format">
         <option value="html-iframe">HTML &lt;iframe&gt;</option>
         <option value="plain-text">Plain text - just the Base64 value</option>
         <option value="data-uri">Data URI - data:content/type;base64</option>
-        <option value="css-background">CSS Background Image -- background-image:url()</option>
-        <option value="html-favicon">HTML Favicon -- &lt;link rel=icon /&gt;</option>
-        <option value="html-hyperlink">HTML Hyperlink -- &lt;a&gt;&lt;/a&gt;</option>
-        <option value="html-image">HTML Image -- &lt;img /&gt;</option>
-        <option value="javascript-image">JavaScript Image -- new Image()</option>
-        <option value="javascript-popup">JavaScript Popup -- window.open()</option>
-        <option value="json">JSON -- {image:{mime,data}}</option>
-        <option value="xml">XML -- &lt;image&gt;&lt;/image&gt;</option>
+        <option value="css-background">CSS Background Image</option>
+        <option value="html-favicon">HTML Favicon</option>
+        <option value="html-hyperlink">HTML Hyperlink</option>
+        <option value="html-image">HTML Image</option>
+        <option value="javascript-image">JavaScript Image</option>
+        <option value="javascript-popup">JavaScript Popup</option>
+        <option value="json">JSON</option>
+        <option value="xml">XML</option>
       </select>
       <button type="button" onclick="convertToBase64()">Encode to Base64</button>
     </form>
 
     <hr>
 
-    <button id="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+    <button id="copy-btn" onclick="copyToClipboard()" style="display:none;">Copy to Clipboard</button>
     <div id="base64-output">
       The result of Base64 encoding will appear here
     </div>
 
+    <div id="preview-container">
+      <output id="preview"></output>
+    </div>
+
     <script>
+      function showPreloader() {
+        const preloader = document.getElementById('preloader');
+        preloader.style.display = 'flex';
+      }
+
+      function hidePreloader() {
+        const preloader = document.getElementById('preloader');
+        preloader.style.display = 'none';
+      }
+
       function convertToBase64() {
         const urlInput = document.getElementById('url-input');
         const fileInput = document.getElementById('file-input');
         const outputFormat = document.getElementById('output-format').value;
         const outputDiv = document.getElementById('base64-output');
         const copyBtn = document.getElementById('copy-btn');
+        const previewOutput = document.getElementById('preview');
+        
+        // Reset previous state
+        previewOutput.innerHTML = '';
+        outputDiv.textContent = 'Processing...';
+        copyBtn.style.display = 'none';
+
+        // Show preloader
+        showPreloader();
 
         let base64 = '';
         let fileType = '';
@@ -110,39 +229,97 @@
         if (urlInput.value) {
           // Convert from URL
           fetch(urlInput.value)
-            .then(response => response.blob())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.blob();
+            })
             .then(blob => {
               fileType = blob.type;
               return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onload = () => resolve(reader.result);
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
               });
             })
             .then(result => {
-              base64 = result;
+              base64 = result.split(',')[1];
+              const dataUri = result;
               updateOutput(base64, fileType, outputFormat, outputDiv);
+              createPreview(dataUri, fileType, previewOutput);
+              hidePreloader();
+              copyBtn.style.display = 'inline-block';
             })
             .catch(error => {
-              console.error('Error fetching image:', error);
-              outputDiv.textContent = 'Error fetching image. Please check the URL and try again.';
+              console.error('Error fetching file:', error);
+              outputDiv.textContent = 'Error fetching file. Please check the URL and try again.';
+              hidePreloader();
             });
         } else if (fileInput.files.length > 0) {
           // Convert from file
           const file = fileInput.files[0];
           fileType = file.type;
+          
+          // Check file size (limit to 50MB)
+          if (file.size > 50 * 1024 * 1024) {
+            outputDiv.textContent = 'File is too large. Maximum file size is 50MB.';
+            hidePreloader();
+            return;
+          }
+
           const reader = new FileReader();
           reader.onload = function(e) {
             base64 = e.target.result.split(',')[1];
+            const dataUri = e.target.result;
             updateOutput(base64, fileType, outputFormat, outputDiv);
+            createPreview(dataUri, fileType, previewOutput);
+            hidePreloader();
+            copyBtn.style.display = 'inline-block';
           };
+
+          reader.onerror = function() {
+            outputDiv.textContent = 'Error reading file.';
+            hidePreloader();
+          };
+
           reader.readAsDataURL(file);
         } else {
-          outputDiv.textContent = 'Please enter an image URL or select a file to convert.';
+          outputDiv.textContent = 'Please enter a URL or select a file to convert.';
+          hidePreloader();
         }
+      }
 
-        copyBtn.style.display = 'inline-block';
+      // Rest of the previous script remains the same (createPreview, updateOutput, copyToClipboard functions)
+      function createPreview(dataUri, fileType, previewOutput) {
+        previewOutput.innerHTML = ''; // Clear previous preview
+        
+        if (fileType.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = dataUri;
+          img.id = 'preview';
+          previewOutput.appendChild(img);
+        } else if (fileType.startsWith('video/')) {
+          const video = document.createElement('video');
+          video.src = dataUri;
+          video.controls = true;
+          video.id = 'preview';
+          previewOutput.appendChild(video);
+        } else if (fileType.startsWith('audio/')) {
+          const audio = document.createElement('audio');
+          audio.src = dataUri;
+          audio.controls = true;
+          audio.id = 'preview';
+          previewOutput.appendChild(audio);
+        } else if (fileType === 'text/html' || fileType === 'text/plain') {
+          const iframe = document.createElement('iframe');
+          iframe.src = dataUri;
+          iframe.id = 'preview';
+          iframe.style.width = '100%';
+          iframe.style.height = '300px';
+          previewOutput.appendChild(iframe);
+        }
       }
 
       function updateOutput(base64, fileType, outputFormat, outputDiv) {
@@ -177,10 +354,10 @@
             output = `window.open("data:${fileType};base64,${base64}");`;
             break;
           case 'json':
-            output = `{image:{mime:"${fileType}",data:"${base64}"}}`;
+            output = `{file:{mime:"${fileType}",data:"${base64}"}}`;
             break;
           case 'xml':
-            output = `<image type="${fileType}" data="${base64}"></image>`;
+            output = `<file type="${fileType}" data="${base64}"></file>`;
             break;
           default:
             output = 'Invalid output format selected.';
