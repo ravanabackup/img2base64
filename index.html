@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image to Base64 Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: white;
+      padding: 40px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #base64-output {
+      background-color: #f4f4f4;
+      padding: 20px;
+      border-radius: 3px;
+      word-break: break-all;
+    }
+
+    #copy-btn {
+      float: right;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image to Base64 Converter</h1>
+    <form>
+      <input type="text" id="url-input" placeholder="Enter image URL or upload a file">
+      <input type="file" id="file-input" name="file">
+      <select id="output-format">
+        <option value="html-iframe">HTML &lt;iframe&gt;</option>
+        <option value="plain-text">Plain text - just the Base64 value</option>
+        <option value="data-uri">Data URI - data:content/type;base64</option>
+        <option value="css-background">CSS Background Image -- background-image:url()</option>
+        <option value="html-favicon">HTML Favicon -- &lt;link rel=icon /&gt;</option>
+        <option value="html-hyperlink">HTML Hyperlink -- &lt;a&gt;&lt;/a&gt;</option>
+        <option value="html-image">HTML Image -- &lt;img /&gt;</option>
+        <option value="javascript-image">JavaScript Image -- new Image()</option>
+        <option value="javascript-popup">JavaScript Popup -- window.open()</option>
+        <option value="json">JSON -- {image:{mime,data}}</option>
+        <option value="xml">XML -- &lt;image&gt;&lt;/image&gt;</option>
+      </select>
+      <button type="button" onclick="convertToBase64()">Encode to Base64</button>
+    </form>
+
+    <hr>
+
+    <button id="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+    <div id="base64-output">
+      The result of Base64 encoding will appear here
+    </div>
+
+    <script>
+      function convertToBase64() {
+        const urlInput = document.getElementById('url-input');
+        const fileInput = document.getElementById('file-input');
+        const outputFormat = document.getElementById('output-format').value;
+        const outputDiv = document.getElementById('base64-output');
+        const copyBtn = document.getElementById('copy-btn');
+
+        let base64 = '';
+        let fileType = '';
+
+        if (urlInput.value) {
+          // Convert from URL
+          fetch(urlInput.value)
+            .then(response => response.blob())
+            .then(blob => {
+              fileType = blob.type;
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+            })
+            .then(result => {
+              base64 = result;
+              updateOutput(base64, fileType, outputFormat, outputDiv);
+            })
+            .catch(error => {
+              console.error('Error fetching image:', error);
+              outputDiv.textContent = 'Error fetching image. Please check the URL and try again.';
+            });
+        } else if (fileInput.files.length > 0) {
+          // Convert from file
+          const file = fileInput.files[0];
+          fileType = file.type;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            base64 = e.target.result.split(',')[1];
+            updateOutput(base64, fileType, outputFormat, outputDiv);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          outputDiv.textContent = 'Please enter an image URL or select a file to convert.';
+        }
+
+        copyBtn.style.display = 'inline-block';
+      }
+
+      function updateOutput(base64, fileType, outputFormat, outputDiv) {
+        let output;
+
+        switch (outputFormat) {
+          case 'html-iframe':
+            output = `<iframe src="data:${fileType};base64,${base64}"></iframe>`;
+            break;
+          case 'plain-text':
+            output = base64;
+            break;
+          case 'data-uri':
+            output = `data:${fileType};base64,${base64}`;
+            break;
+          case 'css-background':
+            output = `background-image:url(data:${fileType};base64,${base64})`;
+            break;
+          case 'html-favicon':
+            output = `<link rel="icon" href="data:${fileType};base64,${base64}">`;
+            break;
+          case 'html-hyperlink':
+            output = `<a href="data:${fileType};base64,${base64}">Link</a>`;
+            break;
+          case 'html-image':
+            output = `<img src="data:${fileType};base64,${base64}">`;
+            break;
+          case 'javascript-image':
+            output = `new Image().src = "data:${fileType};base64,${base64}";`;
+            break;
+          case 'javascript-popup':
+            output = `window.open("data:${fileType};base64,${base64}");`;
+            break;
+          case 'json':
+            output = `{image:{mime:"${fileType}",data:"${base64}"}}`;
+            break;
+          case 'xml':
+            output = `<image type="${fileType}" data="${base64}"></image>`;
+            break;
+          default:
+            output = 'Invalid output format selected.';
+        }
+
+        outputDiv.textContent = output;
+      }
+
+      function copyToClipboard() {
+        const outputDiv = document.getElementById('base64-output');
+        navigator.clipboard.writeText(outputDiv.textContent);
+        alert('Copied to clipboard!');
+      }
+    </script>
+  </div>
+</body>
+</html>
